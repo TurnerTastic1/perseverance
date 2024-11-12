@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is used to run the endor(HW6) program
+# Create the executable
 make
 
 # Run the program
