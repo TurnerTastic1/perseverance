@@ -1,6 +1,7 @@
 #include <cmath>
 #include "scene.hpp"
 #include "util.hpp"
+#include "rover.hpp"
 
 #ifdef USEGLEW
 #include <GL/glew.h>
@@ -39,8 +40,7 @@ int zh = 90;       // Light azimuth
 float ylight = 0;  // Elevation of light
 
 // Objects
-// Tree tree = Tree();
-// Speeder speeder = Speeder(shiny);
+Rover rover = Rover();
 
 // Variables
 double speederZPos = 1;
@@ -217,6 +217,9 @@ void Scene::draw()
 
   // No lighting from here on
   glDisable(GL_LIGHTING);
+
+  // Draw objects
+  rover.draw();
 
   // Draw axes if enabled
   drawAxes();

@@ -25,6 +25,9 @@
 #define Cos(x) (cos((x) * 3.14159265 / 180))
 #define Sin(x) (sin((x) * 3.14159265 / 180))
 
+// Constants
+const double Util::PI = 3.14159265358979323846;
+
 /*
  *  Check for OpenGL errors
  */
@@ -183,4 +186,71 @@ int Util::LoadTexBMP(const char *file)
   free(image);
   //  Return texture name
   return texture;
+}
+
+// Utility function to convert degrees to radians
+double Util::degToRad(double degrees)
+{
+  return degrees * Util::PI / 180.0;
+}
+
+void Util::calculateRotation(const double start[3], const double end[3], double &angle, double rotationAxis[3])
+{
+  // Direction vector from start to end
+  double dirX = end[0] - start[0];
+  double dirY = end[1] - start[1];
+  double dirZ = end[2] - start[2];
+
+  // Length of the direction vector
+  double length = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+  if (length == 0.0)
+  {
+    angle = 0.0;
+    rotationAxis[0] = 0.0;
+    rotationAxis[1] = 1.0;
+    rotationAxis[2] = 0.0;
+    return;
+  }
+
+  // Normalize the direction vector
+  double normX = dirX / length;
+  double normY = dirY / length;
+  double normZ = dirZ / length;
+
+  // Y-axis unit vector
+  double yAxisX = 0.0;
+  double yAxisY = 1.0;
+  double yAxisZ = 0.0;
+
+  // Calculate the angle between the direction vector and the Y-axis
+  double dotProduct = normX * yAxisX + normY * yAxisY + normZ * yAxisZ;
+  // Clamp the dot product to avoid numerical errors
+  if (dotProduct > 1.0)
+    dotProduct = 1.0;
+  if (dotProduct < -1.0)
+    dotProduct = -1.0;
+  angle = acos(dotProduct) * (180.0 / Util::PI); // Convert to degrees
+
+  // Calculate the rotation axis using cross product of Y-axis and direction vector
+  rotationAxis[0] = yAxisY * normZ - yAxisZ * normY;
+  rotationAxis[1] = yAxisZ * normX - yAxisX * normZ;
+  rotationAxis[2] = yAxisX * normY - yAxisY * normX;
+
+  // Handle the case when the direction is parallel to the Y-axis
+  double axisLength = sqrt(rotationAxis[0] * rotationAxis[0] + rotationAxis[1] * rotationAxis[1] + rotationAxis[2] * rotationAxis[2]);
+  if (axisLength == 0.0)
+  {
+    // The direction is parallel to Y-axis
+    rotationAxis[0] = 1.0;
+    rotationAxis[1] = 0.0;
+    rotationAxis[2] = 0.0;
+    angle = (normY >= 0.0) ? 0.0 : 180.0;
+  }
+  else
+  {
+    // Normalize rotation axis
+    rotationAxis[0] /= axisLength;
+    rotationAxis[1] /= axisLength;
+    rotationAxis[2] /= axisLength;
+  }
 }

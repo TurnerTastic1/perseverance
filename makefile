@@ -1,4 +1,4 @@
-# HW6 makefile
+# Perseverance makefile
 EXE=perseverance
 SRC_DIR=src
 INC_DIR=include
@@ -33,7 +33,7 @@ CLEAN=rm -rf $(BUILD_DIR)/*
 endif
 
 # Object files
-OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/scene.o $(BUILD_DIR)/util.o
+OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/scene.o $(BUILD_DIR)/util.o $(BUILD_DIR)/rover.o
 
 # Ensure the build directory exists
 $(BUILD_DIR):
@@ -54,6 +54,10 @@ $(BUILD_DIR)/scene.o: $(SRC_DIR)/scene.cpp $(INC_DIR)/scene.hpp | $(BUILD_DIR)
 # Compile rule for util.cpp
 $(BUILD_DIR)/util.o: $(SRC_DIR)/util.cpp $(INC_DIR)/util.hpp | $(BUILD_DIR)
 	g++ -c $(CFLG) $(SRC_DIR)/util.cpp -o $(BUILD_DIR)/util.o
+
+# Compile rule for rover.cpp
+$(BUILD_DIR)/rover.o: $(SRC_DIR)/rover.cpp $(INC_DIR)/rover.hpp | $(BUILD_DIR)
+	g++ -c $(CFLG) $(SRC_DIR)/rover.cpp -o $(BUILD_DIR)/rover.o
 
 # Clean
 clean:
