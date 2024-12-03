@@ -18,8 +18,12 @@ private:
   int fov;    //  Field of view (for perspective)
   double asp; //  Aspect ratio
 
+  int groundTexture; // Ground texture
+
+  bool isDay;       // Day or night
   int th, ph;       //  Azimuth, elevation angle
   bool showAxes;    //  Toggle for axis display
+  bool textureMode; //  Toggle for texture mode
   int viewMode;     // Toggle for view mode - 0 for perspective, 1 for first person, 2 for othographic
   double moveSpeed; // Speed of movement
   double rotSpeed;  // Speed of rotation
@@ -35,7 +39,7 @@ private:
   void adjustAngles(int th, int ph);
 
   void toggleAxes();
-  void toggleShowcaseSpeeder();
+  void toggleTextureMode();
   void toggleViewMode();
   void toggleLight();
   void toggleLightSpin();

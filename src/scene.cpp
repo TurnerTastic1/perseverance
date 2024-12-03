@@ -20,7 +20,11 @@
 #define Cos(x) (cos((x) * 3.14159265 / 180))
 #define Sin(x) (sin((x) * 3.14159265 / 180))
 
-Scene::Scene(double dim, int res, int fov, double asp) : dim(dim), res(res), fov(fov), asp(asp), th(0), ph(0), showAxes(true), viewMode(0), moveSpeed(0.7), rotSpeed(0.2), light(false), spin(true) {}
+Scene::Scene(double dim, int res, int fov, double asp) : dim(dim), res(res), fov(fov), asp(asp), th(0), ph(0), showAxes(true), viewMode(0), moveSpeed(0.7), rotSpeed(0.2), light(true), spin(true)
+{
+  textureMode = true;
+  isDay = true;
+}
 
 /* Globals */
 // Light parameters
@@ -59,6 +63,8 @@ double angle = 0.0; // Angle in radians
 
 void Scene::loadTextures()
 {
+  rover.loadTextures();
+  groundTexture = Util::LoadTexBMP("textures/ground_texture.bmp");
 }
 
 void Scene::idle()
@@ -67,22 +73,9 @@ void Scene::idle()
   if (light && spin)
   {
     //  Elapsed time in seconds
-    double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    double t = glutGet(GLUT_ELAPSED_TIME) / 2000.0;
     zh = fmod(90 * t, 360.0);
   }
-
-  // // Object scene specific logic
-  // if (!showcaseSpeeder)
-  // {
-
-  //   double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-  //   speederZPos = fmod(25 * t, 360);
-
-  //   if (speederXPos <= -4)
-  //     speederXPos = 4;
-  //   else
-  //     speederXPos = speederXPos - 0.01;
-  // }
 
   //  Tell GLUT it is necessary to redisplay the scene
   glutPostRedisplay();
@@ -137,41 +130,53 @@ static void ball(double x, double y, double z, double r)
   glPopMatrix();
 }
 
-void initLighting()
+bool doLighting(double dim)
 {
-  // distance = showcaseSpeeder ? distance : distance + (distance * 0.5);
-  double ballRadius = 3.0;
-  //  Translate intensity to color vectors
-  float Ambient[] = {0.01 * ambient, 0.01 * ambient, 0.01 * ambient, 1.0};
-  float Diffuse[] = {0.01 * diffuse, 0.01 * diffuse, 0.01 * diffuse, 1.0};
-  float Specular[] = {0.01 * specular, 0.01 * specular, 0.01 * specular, 1.0};
-  //  Light position
-  float Position[] = {distance * Cos(zh), ylight, distance * Sin(zh), 1.0};
-  // float pos2[] = {distance * Cos(zh), distance * Sin(zh), 0, 1.0};
-  //   Draw light position as ball (still no lighting here)
+  double ballRadius = 10.0;
+  float pos2[] = {0, 1.2 * dim * Sin(zh), 1.2 * dim * Cos(zh), 1.0};
   glColor3f(1, 1, 1);
-  ball(Position[0], Position[1], Position[2], ballRadius);
-  // ball(pos2[0], pos2[1], pos2[2], ballRadius);
-  //   OpenGL should normalize normal vectors
-  glEnable(GL_NORMALIZE);
-  //  Enable lighting
-  glEnable(GL_LIGHTING);
-  //  Location of viewer for specular calculations
-  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, local);
-  //  glColor sets ambient and diffuse color materials
-  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  ball(pos2[0], pos2[1], pos2[2], ballRadius);
+
+  bool lightAboveGround = pos2[1] > 0;
+
+  // Translate intensity to color vectors
+  float Ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
+  float Diffuse[] = {0.0f, 0.0f, 0.0f, 1.0f};
+  float Specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+  if (lightAboveGround)
+  {
+    Ambient[0] = Ambient[1] = Ambient[2] = 0.01f * ambient;
+    Diffuse[0] = Diffuse[1] = Diffuse[2] = 0.01f * diffuse;
+    Specular[0] = Specular[1] = Specular[2] = 0.01f * specular;
+  }
+
+  glEnable(GL_NORMALIZE);                                     // OpenGL should normalize normal vectors
+  glEnable(GL_LIGHTING);                                      // Enable lighting
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, local);          // Location of viewer for specular calculations
+  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE); // glColor sets ambient and diffuse color materials
   glEnable(GL_COLOR_MATERIAL);
-  //  Enable light 0
-  glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHT0); // Enable light 0
   //  Set ambient, diffuse, specular components and position of light 0
   glLightfv(GL_LIGHT0, GL_AMBIENT, Ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, Diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, Specular);
-  glLightfv(GL_LIGHT0, GL_POSITION, Position);
+  glLightfv(GL_LIGHT0, GL_POSITION, pos2);
+
+  return pos2[1] > 0;
 }
 
 void Scene::draw()
 {
+  if (isDay)
+  {
+    glClearColor(0.89, 0.61, 0.33, 1.0);
+  }
+  else
+  {
+    glClearColor(0.18, 0.12, 0.2, 1.0);
+  }
+
   // Clear the window and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
@@ -202,24 +207,27 @@ void Scene::draw()
   // * Lighting
   if (light)
   {
-    initLighting();
+    isDay = doLighting(dim);
   }
   else
   {
     glDisable(GL_LIGHTING);
   }
 
-  // Draw enviroment
-  // drawEnviroment();
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, textureMode ? GL_MODULATE : GL_REPLACE);
 
-  // No textures from here on
-  glDisable(GL_TEXTURE_2D);
+  // Draw enviroment
+  drawEnviroment();
+
+  // Draw objects
+  rover.draw(isDay);
 
   // No lighting from here on
   glDisable(GL_LIGHTING);
 
-  // Draw objects
-  rover.draw();
+  // No textures from here on
+  glDisable(GL_TEXTURE_2D);
 
   // Draw axes if enabled
   drawAxes();
@@ -235,52 +243,79 @@ void Scene::draw()
 
 void Scene::drawEnviroment()
 {
-  // glBindTexture(GL_TEXTURE_2D, pathTexture);
+  glBindTexture(GL_TEXTURE_2D, groundTexture);
   glColor3f(1, 1, 1);
+
+  float groundSize = 150;
 
   // Draw ground
   glBegin(GL_QUADS);
 
-  // Draw the path
-  // glColor3f(0.4, 0.27, 0.2);
+  // Top face (Positive Y)
   glNormal3f(0, 1, 0);
   glTexCoord2f(0, 0);
-  glVertex3d(-dim, -0.01, -4);
+  glVertex3d(-groundSize, -0.01, -groundSize);
   glTexCoord2f(1, 0);
-  glVertex3d(-dim, -0.01, 4);
+  glVertex3d(-groundSize, -0.01, groundSize);
   glTexCoord2f(1, 1);
-  glVertex3d(dim, -0.01, 4);
+  glVertex3d(groundSize, -0.01, groundSize);
   glTexCoord2f(0, 1);
-  glVertex3d(dim, -0.01, -4);
+  glVertex3d(groundSize, -0.01, -groundSize);
 
-  glEnd();
-
-  // glBindTexture(GL_TEXTURE_2D, grassTexture);
-  glColor3f(1, 1, 1);
-
-  glBegin(GL_QUADS);
-
-  // Draw the grass
-  // glColor3f(0.2, 0.5, 0.4);
-  glNormal3f(0, 1, 0);
+  // Bottom face (Negative Y)
+  glNormal3f(0, -1, 0);
   glTexCoord2f(0, 0);
-  glVertex3d(-dim, -0.01, -dim);
+  glVertex3d(-groundSize, -0.01, -groundSize);
   glTexCoord2f(1, 0);
-  glVertex3d(-dim, -0.01, -4);
+  glVertex3d(groundSize, -0.01, -groundSize);
   glTexCoord2f(1, 1);
-  glVertex3d(dim, -0.01, -4);
+  glVertex3d(groundSize, -0.01, groundSize);
   glTexCoord2f(0, 1);
-  glVertex3d(dim, -0.01, -dim);
+  glVertex3d(-groundSize, -0.01, groundSize);
 
-  glNormal3f(0, 1, 0);
+  // Front face (Positive Z)
+  glNormal3f(0, 0, 1);
   glTexCoord2f(0, 0);
-  glVertex3d(-dim, -0.01, dim);
+  glVertex3d(-groundSize, -0.01, groundSize);
   glTexCoord2f(1, 0);
-  glVertex3d(-dim, -0.01, 4);
+  glVertex3d(-groundSize, 0.01, groundSize);
   glTexCoord2f(1, 1);
-  glVertex3d(dim, -0.01, 4);
+  glVertex3d(groundSize, 0.01, groundSize);
   glTexCoord2f(0, 1);
-  glVertex3d(dim, -0.01, dim);
+  glVertex3d(groundSize, -0.01, groundSize);
+
+  // Back face (Negative Z)
+  glNormal3f(0, 0, -1);
+  glTexCoord2f(0, 0);
+  glVertex3d(-groundSize, -0.01, -groundSize);
+  glTexCoord2f(1, 0);
+  glVertex3d(-groundSize, 0.01, -groundSize);
+  glTexCoord2f(1, 1);
+  glVertex3d(groundSize, 0.01, -groundSize);
+  glTexCoord2f(0, 1);
+  glVertex3d(groundSize, -0.01, -groundSize);
+
+  // Left face (Negative X)
+  glNormal3f(-1, 0, 0);
+  glTexCoord2f(0, 0);
+  glVertex3d(-groundSize, -0.01, -groundSize);
+  glTexCoord2f(1, 0);
+  glVertex3d(-groundSize, 0.01, -groundSize);
+  glTexCoord2f(1, 1);
+  glVertex3d(-groundSize, 0.01, groundSize);
+  glTexCoord2f(0, 1);
+  glVertex3d(-groundSize, -0.01, groundSize);
+
+  // Right face (Positive X)
+  glNormal3f(1, 0, 0);
+  glTexCoord2f(0, 0);
+  glVertex3d(groundSize, -0.01, -groundSize);
+  glTexCoord2f(1, 0);
+  glVertex3d(groundSize, 0.01, -groundSize);
+  glTexCoord2f(1, 1);
+  glVertex3d(groundSize, 0.01, groundSize);
+  glTexCoord2f(0, 1);
+  glVertex3d(groundSize, -0.01, groundSize);
 
   glEnd();
 }
@@ -324,6 +359,9 @@ void Scene::drawInfo()
   Util::Print("View Mode (m): %s",
               viewMode == 0 ? "Perspective" : viewMode == 1 ? "First person"
                                                             : "Orthographic");
+
+  glWindowPos2i(5, 45);
+  Util::Print("Texture Mode (t): %s", textureMode ? "Modulate" : "Replace");
 }
 
 void Scene::toggleAxes()
@@ -335,6 +373,11 @@ void Scene::resetAngles()
 {
   th = 0;
   ph = 0;
+}
+
+void Scene::toggleTextureMode()
+{
+  textureMode = !textureMode;
 }
 
 void Scene::adjustAngles(int t, int p)
@@ -356,6 +399,8 @@ void Scene::key(unsigned char ch, int x, int y)
     toggleAxes();
   else if (ch == 'm' || ch == 'M')
     toggleViewMode();
+  else if (ch == 't' || ch == 'T')
+    toggleTextureMode();
   // else if (ch == 'l' || ch == 'L')
   //   toggleLight();
   // else if (ch == 'k' || ch == 'K')

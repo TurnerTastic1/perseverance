@@ -15,6 +15,8 @@ public:
 
   static double degToRad(double degrees);
   static void calculateRotation(const double start[3], const double end[3], double &angle, double rotationAxis[3]);
+
+  static void ball(double x, double y, double z, double r, double inc = 10.0, double shiny = 50.0, double emissionFactor = 1.0);
 };
 
 #endif

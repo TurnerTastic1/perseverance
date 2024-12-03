@@ -18,7 +18,7 @@
 #endif
 
 // Globals
-const int DIM = 50;
+const int DIM = 80;
 const int fov = 55;
 const int asp = 1;
 Scene scene = Scene(DIM, RES, fov, asp);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
   //  Pass control to GLUT so it can interact with the user
   glutIdleFunc(idle);
 
-  //  scene.loadTextures();
+  scene.loadTextures();
 
   glutMainLoop();
   return 0;

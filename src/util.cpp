@@ -80,6 +80,7 @@ void Util::Vertex(double th, double ph)
   //  For a sphere at the origin, the position
   //  and normal vectors are the same
   glNormal3d(x, y, z);
+  glTexCoord2d(th / 360, ph / 180 + 0.5);
   glVertex3d(x, y, z);
 }
 
@@ -253,4 +254,40 @@ void Util::calculateRotation(const double start[3], const double end[3], double 
     rotationAxis[1] /= axisLength;
     rotationAxis[2] /= axisLength;
   }
+}
+
+void Util::ball(double x, double y, double z, double r, double inc, double shiny, double emissionFactor)
+{
+  // Save transformation
+  glPushMatrix();
+
+  // Offset and scale
+  glTranslated(x, y, z);
+  glScaled(r, r, r);
+
+  // Set material properties
+  float yellow[] = {1.0f, 1.0f, 0.0f, 1.0f};
+  float emission[] = {0.0f, 0.0f, static_cast<float>(0.01 * emissionFactor), 1.0f};
+
+  // glColor3f(1.0f, 1.0f, 1.0f); // White color for the sphere
+
+  // Set material properties
+  glMaterialf(GL_FRONT, GL_SHININESS, static_cast<GLfloat>(shiny));
+  glMaterialfv(GL_FRONT, GL_SPECULAR, yellow);
+  glMaterialfv(GL_FRONT, GL_EMISSION, emission);
+
+  // Draw the sphere using quad strips for latitude bands
+  for (double ph = -90.0; ph < 90.0; ph += inc)
+  {
+    glBegin(GL_QUAD_STRIP);
+    for (double th = 0.0; th <= 360.0; th += 2 * inc)
+    {
+      Util::Vertex(th, ph);
+      Util::Vertex(th, ph + inc);
+    }
+    glEnd();
+  }
+
+  // Restore transformation
+  glPopMatrix();
 }
