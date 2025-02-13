@@ -137,33 +137,56 @@ void Rover::buildBody()
 void Rover::buildRearPowerSource()
 {
   // Set the color for the power source
-  glColor3f(0.0f, 0.0f, 1.0f); // Blue color
+  // glColor3f(0.0f, 0.0f, 1.0f); // Blue color
+
+  glBindTexture(GL_TEXTURE_2D, bodyTexture);
+  glColor3f(1, 1, 1); // Set color to white to not affect texture color
 
   // Draw the rear power source using quads
   glBegin(GL_QUADS);
 
   // Front face
+  glNormal3f(0, 0, 1);
+  glTexCoord2f(0, 0);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 0);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 1);
   glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
   glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size);
 
   // Back face
+  glNormal3f(0, 0, -1);
+  glTexCoord2f(0, 0);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 1);
   glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(0, 1);
   glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size);
 
   // Left face
+  glNormal3f(-1, 0, 0);
+  glTexCoord2f(0, 0);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 1);
   glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
   glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size);
 
   // Right face
+  glNormal3f(1, 0, 0);
+  glTexCoord2f(0, 0);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 1);
   glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
   glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size);
 
   // // Top face
@@ -173,12 +196,79 @@ void Rover::buildRearPowerSource()
   // glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size);
 
   // Bottom face
+  glNormal3f(0, -1, 0);
+  glTexCoord2f(0, 0);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 1);
   glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
   glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size);
 
   glEnd();
+
+  // Repeat the same quad but position more inner so lighting works
+  glBegin(GL_QUADS);
+
+  // Front face
+  glNormal3f(0, 0, -1);
+  glTexCoord2f(0, 0);
+  glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size - 0.01);
+  glTexCoord2f(1, 0);
+  glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, 0.4f * size - 0.01);
+  glTexCoord2f(1, 1);
+  glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size - 0.01);
+  glTexCoord2f(0, 1);
+  glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, 0.4f * size - 0.01);
+
+  // Back face
+  glNormal3f(0, 0, 1);
+  glTexCoord2f(0, 0);
+  glVertex3f(-0.75f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size + 0.01);
+  glTexCoord2f(1, 0);
+  glVertex3f(-0.85f * size, -0.25f * size + bodyPlacementHeight, -0.4f * size + 0.01);
+  glTexCoord2f(1, 1);
+  glVertex3f(-1.4f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size + 0.01);
+  glTexCoord2f(0, 1);
+  glVertex3f(-0.75f * size, 0.25f * size + bodyPlacementHeight, -0.4f * size + 0.01);
+
+  // Left face
+  glNormal3f(1, 0, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-0.75f * size + 0.01, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
+  glVertex3f(-0.75f * size + 0.01, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 1);
+  glVertex3f(-0.75f * size + 0.01, 0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
+  glVertex3f(-0.75f * size + 0.01, 0.25f * size + bodyPlacementHeight, -0.4f * size);
+
+  // Right face
+  glNormal3f(-1, 0, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-0.85f * size - 0.01, -0.25f * size + bodyPlacementHeight, -0.4f * size);
+  glTexCoord2f(1, 0);
+  glVertex3f(-0.85f * size - 0.01, -0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(1, 1);
+  glVertex3f(-1.4f * size - 0.01, 0.25f * size + bodyPlacementHeight, 0.4f * size);
+  glTexCoord2f(0, 1);
+  glVertex3f(-1.4f * size - 0.01, 0.25f * size + bodyPlacementHeight, -0.4f * size);
+
+  glEnd();
+
+  // Cylinder for the power source - sticking out in the back - using drawsupport function
+  double powerSourceStart[3] = {
+      -size * 0.70,
+      bodyPlacementHeight,
+      0}; // Start point
+
+  double powerSourceEnd[3] = {
+      -size * 1.27,
+      bodyPlacementHeight * 1.7,
+      0}; // End point
+
+  drawSupport(5, powerSourceStart, powerSourceEnd, wheelTexture);
 }
 
 void Rover::buildWheels()

@@ -20,7 +20,7 @@
 #define Cos(x) (cos((x) * 3.14159265 / 180))
 #define Sin(x) (sin((x) * 3.14159265 / 180))
 
-Scene::Scene(double dim, int res, int fov, double asp) : dim(dim), res(res), fov(fov), asp(asp), th(0), ph(0), showAxes(true), viewMode(0), moveSpeed(0.7), rotSpeed(0.2), light(true), spin(true)
+Scene::Scene(double dim, int res, int fov, double asp) : dim(dim), res(res), fov(fov), asp(asp), th(0), ph(0), showAxes(true), viewMode(0), moveSpeed(5), rotSpeed(0.2), light(true), spin(true)
 {
   textureMode = true;
   isDay = true;
@@ -47,16 +47,18 @@ float ylight = 0;  // Elevation of light
 Rover rover = Rover();
 
 // Variables
-double speederZPos = 1;
-double speederXPos = 4;
+double rockX;
+double rockZ;
 
 // Textures
 int mode = 0; // Texture mode
 
+double groundOffset = 0.0; // Global offset for the ground texture
+
 // Camera parameters
-double eyeX = 0, eyeY = 2, eyeZ = 0.0;        // Initial position of the camera
-double centerX = 0, centerY = 2, centerZ = 0; // Point the camera is looking at
-double upX = 0.0, upY = 1.0, upZ = 0.0;       // Up vector
+double eyeX = 100, eyeY = 50, eyeZ = 0.0;      // Initial position of the camera
+double centerX = 0, centerY = 50, centerZ = 0; // Point the camera is looking at
+double upX = 0.0, upY = 1.0, upZ = 0.0;        // Up vector
 
 // Player orientation
 double angle = 0.0; // Angle in radians
@@ -65,6 +67,9 @@ void Scene::loadTextures()
 {
   rover.loadTextures();
   groundTexture = Util::LoadTexBMP("textures/ground_texture.bmp");
+  mountainTexture = Util::LoadTexBMP("textures/mountain_texture.bmp");
+
+  resetRock();
 }
 
 void Scene::idle()
@@ -75,6 +80,18 @@ void Scene::idle()
     //  Elapsed time in seconds
     double t = glutGet(GLUT_ELAPSED_TIME) / 2000.0;
     zh = fmod(90 * t, 360.0);
+  }
+
+  // Increment ground offset to simulate movement
+  groundOffset += 0.001;
+
+  rockX -= 0.28;
+
+  // If rock goes behind the camera (e.g., rockZ < -50),
+  // reset it to appear in front again
+  if (rockX < -145)
+  {
+    resetRock();
   }
 
   //  Tell GLUT it is necessary to redisplay the scene
@@ -96,6 +113,13 @@ void Scene::toggleLightSpin()
   spin = !spin;
 }
 
+void Scene::resetRock()
+{
+  // Pick a random Z between 0 and 130
+  rockZ = rand() % 130;
+  rockX = 145.0;
+}
+
 /*
  *  Draw a ball
  *     at (x,y,z)
@@ -110,7 +134,7 @@ static void ball(double x, double y, double z, double r)
   glScaled(r, r, r);
   //  White ball with yellow specular
   float yellow[] = {1.0, 1.0, 0.0, 1.0};
-  float Emission[] = {0.0, 0.0, 0.01 * emission, 1.0};
+  float Emission[] = {0.0f, 0.0f, 0.01f * emission, 1.0f};
   glColor3f(1, 1, 1);
   glMaterialf(GL_FRONT, GL_SHININESS, shiny);
   glMaterialfv(GL_FRONT, GL_SPECULAR, yellow);
@@ -132,8 +156,12 @@ static void ball(double x, double y, double z, double r)
 
 bool doLighting(double dim)
 {
-  double ballRadius = 10.0;
-  float pos2[] = {0, 1.2 * dim * Sin(zh), 1.2 * dim * Cos(zh), 1.0};
+  double ballRadius = 20.0;
+  float pos2[] = {
+      0.0f,
+      static_cast<float>(1.2 * dim * Sin(zh)),
+      static_cast<float>(1.2 * dim * Cos(zh)),
+      1.0f};
   glColor3f(1, 1, 1);
   ball(pos2[0], pos2[1], pos2[2], ballRadius);
 
@@ -253,13 +281,13 @@ void Scene::drawEnviroment()
 
   // Top face (Positive Y)
   glNormal3f(0, 1, 0);
-  glTexCoord2f(0, 0);
+  glTexCoord2f(0, 0 + groundOffset);
   glVertex3d(-groundSize, -0.01, -groundSize);
-  glTexCoord2f(1, 0);
+  glTexCoord2f(1, 0 + groundOffset);
   glVertex3d(-groundSize, -0.01, groundSize);
-  glTexCoord2f(1, 1);
+  glTexCoord2f(1, 1 + groundOffset);
   glVertex3d(groundSize, -0.01, groundSize);
-  glTexCoord2f(0, 1);
+  glTexCoord2f(0, 1 + groundOffset);
   glVertex3d(groundSize, -0.01, -groundSize);
 
   // Bottom face (Negative Y)
@@ -318,6 +346,122 @@ void Scene::drawEnviroment()
   glVertex3d(groundSize, -0.01, groundSize);
 
   glEnd();
+
+  glBindTexture(GL_TEXTURE_2D, mountainTexture);
+  glColor3f(1, 1, 1);
+
+  glBegin(GL_TRIANGLE_STRIP);
+
+  // The idea: Place a series of peaks and valleys to create a mountainous silhouette
+  int mountainDistance = -100;
+  glNormal3f(0, 1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-150, -0.01f, mountainDistance);
+  glTexCoord2f(1, 0);
+  glVertex3f(-120, 40.0f, mountainDistance - 40);
+  glTexCoord2f(1, 1);
+  glVertex3f(-100, -0.01f, mountainDistance - 10);
+
+  glNormal3f(0, 1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-50, 60.0f, mountainDistance - 30);
+  glTexCoord2f(1, 0);
+  glVertex3f(0, -0.01f, mountainDistance + 30);
+  glTexCoord2f(1, 1);
+  glVertex3f(50, 75.0f, mountainDistance - 50);
+
+  glNormal3f(0, 1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(100, -0.01f, mountainDistance + 10);
+  glTexCoord2f(1, 0);
+  glVertex3f(150, 60.0f, mountainDistance - 40);
+  glTexCoord2f(1, 1);
+  glVertex3f(150, -0.01f, mountainDistance - 40);
+
+  glEnd();
+
+  glBegin(GL_TRIANGLE_STRIP);
+
+  glNormal3f(0, -1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-150, -0.01f, mountainDistance - 0.1);
+  glTexCoord2f(1, 0);
+  glVertex3f(-120, 40.0f, mountainDistance - 40 - 0.1);
+  glTexCoord2f(1, 1);
+  glVertex3f(-100, -0.01f, mountainDistance - 10 - 0.1);
+
+  glNormal3f(0, -1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(-50, 60.0f, mountainDistance - 30 - 0.1);
+  glTexCoord2f(1, 0);
+  glVertex3f(0, -0.01f, mountainDistance + 30 - 0.1);
+  glTexCoord2f(1, 1);
+  glVertex3f(50, 75.0f, mountainDistance - 50 - 0.1);
+
+  glNormal3f(0, -1, 0);
+  glTexCoord2f(0, 0);
+  glVertex3f(100, -0.01f, mountainDistance + 10 - 0.1);
+  glTexCoord2f(1, 0);
+  glVertex3f(150, 60.0f, mountainDistance - 40 - 0.1);
+  glTexCoord2f(1, 1);
+  glVertex3f(150, -0.01f, mountainDistance - 40 - 0.1);
+
+  glEnd();
+
+  // Random rock
+  glDisable(GL_TEXTURE_2D);
+  glColor3f(0.4f, 0.4f, 0.4f); // Gray rock color
+
+  glPushMatrix();
+  double rockY = 5; // Slightly above ground
+  glTranslated(rockX, rockY, rockZ);
+
+  // Draw a small cube (or use Util::ball)
+  double rockSize = 8.0;
+  glBegin(GL_QUADS);
+  // Top
+  glNormal3f(0, 1, 0);
+  glVertex3f(-rockSize, 0, -rockSize);
+  glVertex3f(rockSize, 0, -rockSize);
+  glVertex3f(rockSize, 0, rockSize);
+  glVertex3f(-rockSize, 0, rockSize);
+  // Sides...
+  // Front
+  glNormal3f(0, 0, 1);
+  glVertex3f(-rockSize, 0, rockSize);
+  glVertex3f(rockSize, 0, rockSize);
+  glVertex3f(rockSize, -rockSize, rockSize);
+  glVertex3f(-rockSize, -rockSize, rockSize);
+  // Back
+  glNormal3f(0, 0, -1);
+  glVertex3f(rockSize, 0, -rockSize);
+  glVertex3f(-rockSize, 0, -rockSize);
+  glVertex3f(-rockSize, -rockSize, -rockSize);
+  glVertex3f(rockSize, -rockSize, -rockSize);
+  // Left
+  glNormal3f(-1, 0, 0);
+  glVertex3f(-rockSize, 0, -rockSize);
+  glVertex3f(-rockSize, 0, rockSize);
+  glVertex3f(-rockSize, -rockSize, rockSize);
+  glVertex3f(-rockSize, -rockSize, -rockSize);
+  // Right
+  glNormal3f(1, 0, 0);
+  glVertex3f(rockSize, 0, rockSize);
+  glVertex3f(rockSize, 0, -rockSize);
+  glVertex3f(rockSize, -rockSize, -rockSize);
+  glVertex3f(rockSize, -rockSize, rockSize);
+  // Bottom
+  glNormal3f(0, -1, 0);
+  glVertex3f(-rockSize, -rockSize, -rockSize);
+  glVertex3f(rockSize, -rockSize, -rockSize);
+  glVertex3f(rockSize, -rockSize, rockSize);
+  glVertex3f(-rockSize, -rockSize, rockSize);
+  glEnd();
+
+  glPopMatrix();
+
+  // Re-enable textures if needed
+  glEnable(GL_TEXTURE_2D);
 }
 
 void Scene::drawAxes()
@@ -362,6 +506,9 @@ void Scene::drawInfo()
 
   glWindowPos2i(5, 45);
   Util::Print("Texture Mode (t): %s", textureMode ? "Modulate" : "Replace");
+
+  glWindowPos2i(5, 65);
+  Util::Print("Lighting (l): %s", light ? "On" : "Off");
 }
 
 void Scene::toggleAxes()
@@ -401,24 +548,10 @@ void Scene::key(unsigned char ch, int x, int y)
     toggleViewMode();
   else if (ch == 't' || ch == 'T')
     toggleTextureMode();
-  // else if (ch == 'l' || ch == 'L')
-  //   toggleLight();
-  // else if (ch == 'k' || ch == 'K')
-  //   toggleLightSpin();
-  // else if ((light && ch == 'i') || (light && ch == 'I'))
-  //   zh = fmod(zh + 5, 360.0);
-  // else if ((light && ch == 'o') || (light && ch == 'O'))
-  //   zh = fmod(zh - 5, 360.0);
-  // else if ((light && ch == 'b') || (light && ch == 'B'))
-  //   distance += 1;
-  // else if ((light && ch == 'n') || (light && ch == 'N'))
-  //   distance -= 1;
-  // else if ((light && ch == 'g') || (light && ch == 'G'))
-  //   ylight += 0.5;
-  // else if ((light && ch == 'h') || (light && ch == 'H'))
-  //   ylight -= 0.5;
-  // else if (ch == 't')
-  //   mode = 1 - mode;
+  else if (ch == 'l' || ch == 'L')
+    toggleLight();
+  else if (ch == 'k' || ch == 'K')
+    toggleLightSpin();
 
   if (viewMode == 1)
   {

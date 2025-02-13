@@ -18,7 +18,7 @@ private:
   int fov;    //  Field of view (for perspective)
   double asp; //  Aspect ratio
 
-  int groundTexture; // Ground texture
+  int groundTexture, mountainTexture; // Ground texture
 
   bool isDay;       // Day or night
   int th, ph;       //  Azimuth, elevation angle
@@ -45,6 +45,8 @@ private:
   void toggleLightSpin();
 
   void project();
+
+  void resetRock();
 };
 
 #endif

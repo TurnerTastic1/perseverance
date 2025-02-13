@@ -18,7 +18,7 @@
 #endif
 
 // Globals
-const int DIM = 80;
+const int DIM = 200;
 const int fov = 55;
 const int asp = 1;
 Scene scene = Scene(DIM, RES, fov, asp);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
   glutInitWindowSize(800, 800);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
   //  Create the window
-  glutCreateWindow("Perseverance Turner Naef");
+  glutCreateWindow("Perserverance Turner Naef");
 #ifdef USEGLEW
   //  Initialize GLEW
   if (glewInit() != GLEW_OK)
